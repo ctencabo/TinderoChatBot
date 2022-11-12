@@ -1,10 +1,24 @@
-from telegram.ext import Updater, CommandHandler
+from telegram import \
+    KeyboardButton, \
+    ReplyKeyboardMarkup,\
+    ReplyKeyboardRemove,\
+    InlineKeyboardButton, \
+    InlineKeyboardMarkup
+from telegram.ext import Updater, Filters, CommandHandler, MessageHandler
 
 with open('token.txt', 'r') as f:
     TOKEN = f.read()
 
+yes_choice = "Yes"
+no_choice = "No"
+
 def start(update, context):
-    update.message.reply_text("Hello! Welcome to Tindero, your restaurant guide!")
+    buttons = [[KeyboardButton(yes_choice)], [KeyboardButton(no_choice)]]
+    update.message.reply_text("""
+    Hello! Welcome to Tindero, your restaurant guide!
+    
+    Should I start suggesting restaurants?
+    """, reply_markup=ReplyKeyboardMarkup(buttons))
 
 def help(update, context):
     update.message.reply_text("""
@@ -12,13 +26,28 @@ def help(update, context):
 
     /start -> Start Tindero
     /help -> This message
+    /suggest -> Tindero will ask a series of questions to help in suggesting a restaurant
     """)
+
+def message_handler(update, context):
+    if yes_choice in update.message.text:
+        suggest(update, context)
+    if no_choice in update.message.text:
+        update.message.reply_text("Let us know what we can do to help. Thanks!", reply_markup=ReplyKeyboardRemove(True))
+
+def suggest(update, context):
+    buttons = [[InlineKeyboardButton("Test1", callback_data=''), InlineKeyboardButton("Test2", callback_data='')]]
+    update.message.reply_text(
+        "HELLOOOOO I CAN'T SUGGEST ANYTHING AT THE MOMENT",
+        reply_markup=InlineKeyboardMarkup(buttons))
 
 updater = Updater(TOKEN, use_context=True)
 disp = updater.dispatcher
 
 disp.add_handler(CommandHandler("start", start))
 disp.add_handler(CommandHandler("help", help))
+disp.add_handler(CommandHandler("suggest", suggest))
+disp.add_handler(MessageHandler(Filters.text, message_handler))
 
 updater.start_polling()
 updater.idle()
