@@ -1,17 +1,16 @@
 from constants import Api as api
+from api_requests import Requests as api_request
 from telegram import \
     KeyboardButton, \
     ReplyKeyboardMarkup,\
-    ReplyKeyboardRemove,\
-    InlineKeyboardButton, \
-    InlineKeyboardMarkup
-from telegram.ext import Updater, Filters, CommandHandler, MessageHandler, CallbackQueryHandler
+    ReplyKeyboardRemove
+from telegram.ext import Updater, Filters, CommandHandler, MessageHandler
 
 TOKEN = api.TELEGRAM_BOT_API
-ZOMATO = api.ZOMATO_API
 
 yes_choice = "Yes"
 no_choice = "No"
+user_location = ""
 
 def start(update, context):
     buttons = [[KeyboardButton(yes_choice)], [KeyboardButton(no_choice)]]
@@ -38,12 +37,7 @@ def message_handler(update, context):
         update.message.reply_text("Let us know what we can do to help. Thanks!", reply_markup=ReplyKeyboardRemove(True))
 
 def suggest(update, context):
-    buttons = [
-        [InlineKeyboardButton("Test 1", callback_data='1'), InlineKeyboardButton("Test 2", callback_data='2')]
-    ]
-    update.message.reply_text(
-        "HELLOOOOO I CAN'T SUGGEST ANYTHING AT THE MOMENT",
-        reply_markup=InlineKeyboardMarkup(buttons))
+    update.message.reply_text("TEST SUGGEST")
 
 def location_handler(update, context):
     buttons = [[KeyboardButton(yes_choice, request_location=True)], [KeyboardButton(no_choice)]]
@@ -51,29 +45,26 @@ def location_handler(update, context):
 
 def location(update, context):
     user_location = update.message.location
+    longitude = user_location.longitude
+    latitude = user_location.latitude
+    text = api_request.search_business(latitude=latitude, longitude=longitude, radius="1000")
     update.message.reply_text(
-        f'You are currently in LATITUDE: {user_location.latitude} and LONGITUDE: {user_location.longitude}',
+        f"""
+        You are currently in LATITUDE: {latitude} and LONGITUDE: {longitude}
+
+        Here are the restaurants near you: {text}
+        """,
         reply_markup=ReplyKeyboardRemove(True))
 
-def suggest_query_handler(update, context):
-    query = update.callback_query
-    if query.data == '1':
-        text = 'This is message 1'
-    elif query.data == '2':
-        text = 'This is message 2'
-    query.message.reply_text(text)
-    query.answer()
 
 updater = Updater(TOKEN, use_context=True)
 disp = updater.dispatcher
-
 disp.add_handler(CommandHandler("start", start))
 disp.add_handler(CommandHandler("help", help))
 disp.add_handler(CommandHandler("suggest", suggest))
 disp.add_handler(CommandHandler("location", location_handler))
 disp.add_handler(MessageHandler(Filters.location, location))
 disp.add_handler(MessageHandler(Filters.text, message_handler))
-disp.add_handler(CallbackQueryHandler(suggest_query_handler))
 
 updater.start_polling()
 updater.idle()
