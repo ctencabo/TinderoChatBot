@@ -9,6 +9,8 @@ Get Service offerings for business  URL === 'https://api.yelp.com/v3/businesses/
 """
 import requests
 import json
+import pandas as pd
+import numpy as np
 from constants import Api
 
 YELP_API = Api.YELP_API
@@ -16,6 +18,7 @@ YELP_API = Api.YELP_API
 class Requests:
 
     def search_business(latitude, longitude, radius):
+        offset = 0
         ENDPOINT = "https://api.yelp.com/v3/businesses/search"
 
         HEADERS = {
@@ -23,19 +26,26 @@ class Requests:
             "Authorization": 'bearer %s' % YELP_API
         }
 
-        PARAMETERS = {
-            'latitude': latitude,
-            'longitude': longitude,
-            'radius': radius
-        }
-
-        response = requests.get(url=ENDPOINT,
-                                params=PARAMETERS,
-                                headers=HEADERS)
-        businesses = json.loads(response.text)
-        business = businesses['businesses']
         array = []
-        for data in business:
-            print(data['name'])
-            array.append(data['name'])
+
+        for x in range(0, 50, 50):
+        # TODO: Change range to 200
+            PARAMETERS = {
+                'latitude': latitude,
+                'longitude': longitude,
+                'radius': radius,
+                'limit': 50,
+                'offset': offset
+            }
+
+            response = requests.get(url=ENDPOINT,
+                                    params=PARAMETERS,
+                                    headers=HEADERS)
+            businesses = json.loads(response.text)
+            business = businesses['businesses']
+            for data in business:
+                array.append(data)
+
+            offset += 50
+
         return array

@@ -18,7 +18,7 @@ def start(update, context):
     Hello! Welcome to Tindero, your restaurant guide!
 
     Should I start suggesting restaurants?
-    """, reply_markup=ReplyKeyboardMarkup(buttons))
+    """, reply_markup=ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True))
 
 def help(update, context):
     update.message.reply_text("""
@@ -27,34 +27,40 @@ def help(update, context):
     /start -> Start Tindero
     /help -> This message
     /suggest -> Tindero will ask a series of questions to help in suggesting a restaurant
-    /location -> Tindero will provide your current location for more accurate suggesting of restaurants
+    /location -> Tindero will provide your current location and get the list of restaurants around you
     """)
 
 def message_handler(update, context):
     if yes_choice in update.message.text:
-        suggest(update, context)
+        location(update, context)
     if no_choice in update.message.text:
         update.message.reply_text("Let us know what we can do to help. Thanks!", reply_markup=ReplyKeyboardRemove(True))
+    else:
+        update.message.reply_text("IMO NAWNG", reply_markup=ReplyKeyboardRemove(True))
 
 def suggest(update, context):
     update.message.reply_text("TEST SUGGEST")
 
 def location_handler(update, context):
     buttons = [[KeyboardButton(yes_choice, request_location=True)], [KeyboardButton(no_choice)]]
-    update.message.reply_text("Do you want to share your location?", reply_markup=ReplyKeyboardMarkup(buttons))
+    update.message.reply_text(
+        "Do you want to share your location?",
+        reply_markup=ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True))
 
 def location(update, context):
     user_location = update.message.location
     longitude = user_location.longitude
     latitude = user_location.latitude
-    text = api_request.search_business(latitude=latitude, longitude=longitude, radius="1000")
+    array = api_request.search_business(latitude=latitude, longitude=longitude, radius="5000")
     update.message.reply_text(
         f"""
-        You are currently in LATITUDE: {latitude} and LONGITUDE: {longitude}
-
-        Here are the restaurants near you: {text}
+        You are currently in LATITUDE: {latitude} and LONGITUDE: {longitude} Here are the restaurants near you:
         """,
         reply_markup=ReplyKeyboardRemove(True))
+
+    for data in array:
+        update.message.reply_text(text=f"[{data['name']}]({data['url']})", parse_mode="markdown")
+        # update.message.reply_photo(photo=data['image_url'], caption=data['name'])
 
 
 updater = Updater(TOKEN, use_context=True)
