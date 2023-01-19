@@ -11,9 +11,13 @@ import requests
 import json
 import pandas as pd
 import numpy as np
-from constants import Api
+import configparser
 
-YELP_API = Api.YELP_API
+# Setting up configparser
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+YELP_API = config.get('default', "yelp_api")
 
 class Requests:
 
@@ -29,7 +33,7 @@ class Requests:
         array = []
 
         for x in range(0, 50, 50):
-        # TODO: Change range to 200
+            # TODO: Change range to 200
             PARAMETERS = {
                 'latitude': latitude,
                 'longitude': longitude,
@@ -44,8 +48,8 @@ class Requests:
             businesses = json.loads(response.text)
             business = businesses['businesses']
             for data in business:
+                data['_id'] = data.pop('id')
                 array.append(data)
 
             offset += 50
-
         return array
